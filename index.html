@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReelTime — Movie Tickets</title>
+  <style>
+    :root {
+      --bg: #10121a;
+      --panel: #191c27;
+      --muted: #a2a7b8;
+      --text: #f5f6fa;
+      --accent: #ff5b6e;
+      --accent-dark: #e64559;
+      --available: #343949;
+      --selected: #ff5b6e;
+      --occupied: #242733;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      height: 72px;
+      padding: 0 7%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #272a36;
+    }
+
+    .logo {
+      color: var(--accent);
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: .4px;
+    }
+
+    nav { display: flex; gap: 26px; }
+    nav a { color: var(--muted); text-decoration: none; font-size: .95rem; }
+    nav a:hover { color: white; }
+
+    main {
+      width: min(1120px, 90%);
+      margin: 42px auto;
+    }
+
+    .movie-card {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 28px;
+      background: var(--panel);
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 28px;
+    }
+
+    .poster {
+      min-height: 260px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1.15;
+      background:
+        linear-gradient(160deg, transparent 35%, rgba(0,0,0,.75)),
+        radial-gradient(circle at 70% 25%, #ffb05b, transparent 28%),
+        linear-gradient(135deg, #422b76, #d84f61 55%, #f49a52);
+    }
+
+    .movie-info { align-self: center; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; font-size: .75rem; font-weight: 700; letter-spacing: 1.5px; }
+    h1 { margin: 9px 0; font-size: clamp(1.8rem, 4vw, 2.7rem); }
+    .details { color: var(--muted); margin: 0 0 18px; }
+    .description { color: #d0d3dd; line-height: 1.6; max-width: 650px; }
+
+    .booking-grid {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 28px;
+    }
+
+    .section {
+      background: var(--panel);
+      padding: 25px;
+      border-radius: 16px;
+    }
+
+    h2 { margin: 0 0 20px; font-size: 1.2rem; }
+
+    .showtimes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .showtime {
+      border: 1px solid #414556;
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    .showtime.active { border-color: var(--accent); color: var(--accent); background: #ff5b6e14; }
+
+    .screen {
+      height: 9px;
+      width: 82%;
+      margin: 32px auto 26px;
+      border-radius: 50%;
+      background: #e9edf9;
+      box-shadow: 0 8px 25px #dce4ff55;
+      text-align: center;
+      position: relative;
+    }
+    .screen::after {
+      content: "SCREEN";
+      position: absolute;
+      top: 15px;
+      left: 0;
+      right: 0;
+      color: var(--muted);
+      font-size: .68rem;
+      letter-spacing: 3px;
+    }
+
+    .seat-map { display: grid; gap: 9px; justify-content: center; margin-top: 48px; }
+    .seat-row { display: flex; align-items: center; gap: 7px; }
+    .row-label { width: 18px; color: var(--muted); font-size: .75rem; }
+    .seat {
+      width: 27px;
+      height: 23px;
+      border: 0;
+      border-radius: 7px 7px 4px 4px;
+      background: var(--available);
+      cursor: pointer;
+    }
+    .seat:hover:not(.occupied) { background: #70778c; }
+    .seat.selected { background: var(--selected); }
+    .seat.occupied { background: var(--occupied); cursor: not-allowed; }
+    .aisle { width: 14px; }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--available); }
+    .legend .key-selected { background: var(--selected); }
+    .legend .key-occupied { background: var(--occupied); }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      padding: 12px 0;
+      border-bottom: 1px solid #2c2f3b;
+    }
+    .summary-line strong { color: var(--text); }
+    .total { font-size: 1.1rem; margin-top: 8px; }
+    .total strong { color: var(--accent); font-size: 1.35rem; }
+
+    .book-button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--accent);
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .book-button:hover { background: var(--accent-dark); }
+    .note { color: var(--muted); font-size: .8rem; line-height: 1.5; margin-top: 14px; }
+
+    @media (max-width: 760px) {
+      header { padding: 0 5%; }
+      nav { gap: 13px; }
+      nav a { font-size: .82rem; }
+      main { margin: 25px auto; }
+      .movie-card { grid-template-columns: 1fr; }
+      .poster { min-height: 210px; }
+      .booking-grid { grid-template-columns: 1fr; }
+      .section { padding: 20px 14px; }
+      .seat { width: 23px; height: 21px; }
+      .seat-row { gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">ReelTime</div>
+    <nav aria-label="Main navigation">
+      <a href="#">Movies</a>
+      <a href="#">Cinemas</a>
+      <a href="#">My bookings</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="movie-card" aria-labelledby="movie-title">
+      <div class="poster" role="img" aria-label="Colorful movie poster artwork">BEYOND<br>THE STARS</div>
+      <div class="movie-info">
+        <div class="eyebrow">Now showing</div>
+        <h1 id="movie-title">Beyond the Stars</h1>
+        <p class="details">Sci-Fi · Adventure · 2h 08m · Rated PG-13</p>
+        <p class="description">
+          When a mysterious signal arrives from deep space, one pilot embarks on a
+          journey that will change humanity’s future forever.
+        </p>
+      </div>
+    </section>
+
+    <div class="booking-grid">
+      <section class="section">
+        <h2>Choose a showtime</h2>
+        <div class="showtimes" aria-label="Showtimes">
+          <button class="showtime">12:30 PM</button>
+          <button class="showtime active">3:45 PM</button>
+          <button class="showtime">6:15 PM</button>
+          <button class="showtime">9:00 PM</button>
+        </div>
+
+        <div class="screen"></div>
+        <div class="seat-map" id="seatMap" aria-label="Choose your seats"></div>
+
+        <div class="legend">
+          <span><i></i> Available</span>
+          <span><i class="key-selected"></i> Selected</span>
+          <span><i class="key-occupied"></i> Occupied</span>
+        </div>
+      </section>
+
+      <aside class="section">
+        <h2>Your booking</h2>
+        <div class="summary-line"><span>Movie</span><strong>Beyond the Stars</strong></div>
+        <div class="summary-line"><span>Showtime</span><strong id="summaryTime">3:45 PM</strong></div>
+        <div class="summary-line"><span>Seats</span><strong id="summarySeats">None selected</strong></div>
+        <div class="summary-line total"><span>Total</span><strong id="total">$0.00</strong></div>
+        <button class="book-button" id="bookButton">Book tickets</button>
+        <p class="note">Select your seats to see the total. This demo does not process payments.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const seatMap = document.getElementById("seatMap");
+    const summarySeats = document.getElementById("summarySeats");
+    const total = document.getElementById("total");
+    const summaryTime = document.getElementById("summaryTime");
+    const ticketPrice = 12.50;
+    const rows = ["A", "B", "C", "D", "E", "F"];
+    const occupiedSeats = ["A3", "A4", "B6", "C2", "C7", "D5", "E1", "E8", "F4"];
+
+    rows.forEach((row) => {
+      const rowElement = document.createElement("div");
+      rowElement.className = "seat-row";
+
+      const label = document.createElement("span");
+      label.className = "row-label";
+      label.textContent = row;
+      rowElement.appendChild(label);
+
+      for (let number = 1; number <= 8; number++) {
+        if (number === 5) {
+          const aisle = document.createElement("span");
+          aisle.className = "aisle";
+          rowElement.appendChild(aisle);
+        }
+
+        const seatName = `${row}${number}`;
+        const seat = document.createElement("button");
+        seat.className = "seat";
+        seat.type = "button";
+        seat.setAttribute("aria-label", `Seat ${seatName}`);
+
+        if (occupiedSeats.includes(seatName)) {
+          seat.classList.add("occupied");
+          seat.disabled = true;
+          seat.setAttribute("aria-label", `Seat ${seatName}, occupied`);
+        } else {
+          seat.addEventListener("click", () => {
+            seat.classList.toggle("selected");
+            updateBooking();
+          });
+        }
+
+        rowElement.appendChild(seat);
+      }
+
+      seatMap.appendChild(rowElement);
+    });
+
+    function updateBooking() {
+      const selected = [...document.querySelectorAll(".seat.selected")]
+        .map((seat) => seat.getAttribute("aria-label").replace("Seat ", ""));
+      summarySeats.textContent = selected.length ? selected.join(", ") : "None selected";
+      total.textContent = `$${(selected.length * ticketPrice).toFixed(2)}`;
+    }
+
+    document.querySelectorAll(".showtime").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelector(".showtime.active")?.classList.remove("active");
+        button.classList.add("active");
+        summaryTime.textContent = button.textContent;
+      });
+    });
+
+    document.getElementById("bookButton").addEventListener("click", () => {
+      const selectedCount = document.querySelectorAll(".seat.selected").length;
+      if (!selectedCount) {
+        alert("Please select at least one seat.");
+        return;
+      }
+      alert(`Booking demo: ${selectedCount} ticket(s) for ${summaryTime.textContent}.`);
+    });
+  </script>
+</body>
+</html>
